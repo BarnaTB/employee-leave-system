@@ -1,19 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
+import { useContext, useState, useEffect, useCallback } from 'react';
+import { AuthenticationResult } from '@azure/msal-browser';
 import axios from 'axios';
 import { config } from '@/config';
-
-// MSAL configuration
-const msalConfig = {
-  auth: {
-    clientId: config.msal.clientId,
-    authority: config.msal.authority,
-    redirectUri: config.msal.redirectUri,
-  }
-};
-
-// Initialize MSAL instance
-const msalInstance = new PublicClientApplication(msalConfig);
+import { MsalContext } from '@/providers/MsalProvider';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -29,6 +18,7 @@ export interface AuthState {
 }
 
 export const useMsal = () => {
+  const { msalInstance, isInitialized } = useContext(MsalContext);
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     jwtToken: null,
@@ -39,18 +29,21 @@ export const useMsal = () => {
     userDetails: null,
   });
 
-  // Check if user is authenticated on mount
   useEffect(() => {
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      // User is signed in, get token and authenticate with backend
-      msalInstance.setActiveAccount(accounts[0]);
-      acquireToken();
+    if (msalInstance && isInitialized) {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        msalInstance.setActiveAccount(accounts[0]);
+        acquireToken();
+      }
     }
-  }, []);
+  }, [msalInstance, isInitialized]);
 
-  // Acquire token silently or via popup
   const acquireToken = useCallback(async () => {
+    if (!msalInstance || !isInitialized) {
+      throw new Error("MSAL is not initialized");
+    }
+
     try {
       const response = await msalInstance.acquireTokenSilent({
         scopes: ["openid", "profile", "email"],
@@ -60,7 +53,6 @@ export const useMsal = () => {
       await authenticateWithBackend(response);
     } catch (error) {
       console.log("Silent token acquisition failed, trying popup", error);
-      // Silent acquisition failed, fallback to popup
       try {
         const response = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],
@@ -69,11 +61,11 @@ export const useMsal = () => {
         await authenticateWithBackend(response);
       } catch (popupError) {
         console.error("Failed to acquire token via popup", popupError);
+        throw popupError;
       }
     }
-  }, []);
+  }, [msalInstance, isInitialized]);
 
-  // Authenticate with our backend using Microsoft token
   const authenticateWithBackend = useCallback(async (msalResponse: AuthenticationResult) => {
     try {
       const response = await axios.post(
@@ -86,13 +78,8 @@ export const useMsal = () => {
         }
       );
 
-      // Parse JWT claims to determine user roles
-      // (In a real app, these claims would come from your backend)
-      // This is a simplified example
       const jwtToken = response.data.token;
       
-      // Decode JWT to get user info (simplified approach)
-      // In production, use a proper JWT decoder library
       const base64Url = jwtToken.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -114,7 +101,6 @@ export const useMsal = () => {
         },
       });
 
-      // Store token in local storage for persistence
       localStorage.setItem('jwtToken', jwtToken);
       localStorage.setItem('userInfo', JSON.stringify({
         employeeId: decodedToken.employeeId,
@@ -129,8 +115,11 @@ export const useMsal = () => {
     }
   }, []);
 
-  // Login function
   const login = useCallback(async () => {
+    if (!msalInstance || !isInitialized) {
+      throw new Error("MSAL is not initialized");
+    }
+
     try {
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
@@ -142,19 +131,21 @@ export const useMsal = () => {
       console.error("Login failed:", error);
       throw error;
     }
-  }, [authenticateWithBackend]);
+  }, [msalInstance, isInitialized, authenticateWithBackend]);
 
-  // Logout function
   const logout = useCallback(() => {
+    if (!msalInstance || !isInitialized) {
+      console.warn("MSAL is not initialized");
+      return;
+    }
+
     msalInstance.logoutPopup().catch(e => {
       console.error("Logout failed:", e);
     });
     
-    // Clear local storage
     localStorage.removeItem('jwtToken');
     localStorage.removeItem('userInfo');
     
-    // Reset auth state
     setAuthState({
       isAuthenticated: false,
       jwtToken: null,
@@ -164,7 +155,7 @@ export const useMsal = () => {
       isAdmin: false,
       userDetails: null,
     });
-  }, []);
+  }, [msalInstance, isInitialized]);
 
   return {
     login,
