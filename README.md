@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
 
-## Project info
+# Leave Management System - Project Review Guide
 
-**URL**: https://lovable.dev/projects/b1c7be00-4b60-43f3-be03-67e3b81ad66a
+## Prerequisites
+- Docker
+- Docker Compose
+- Git
 
-## How can I edit this code?
+## Quick Start Guide
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/b1c7be00-4b60-43f3-be03-67e3b81ad66a) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd leave-management-system
 ```
 
-**Edit a file directly in GitHub**
+### 2. Environment Setup
+Create a `.env` file with the following contents:
+```
+# Database Configuration
+DB_USER=postgres
+DB_PASSWORD=postgres
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8080
+```
 
-**Use GitHub Codespaces**
+### 3. Running the Application
+```bash
+# Start the entire stack
+docker-compose up -d
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Access the application
+# Frontend: http://localhost
+# Backend API: http://localhost:8080
+```
 
-## What technologies are used for this project?
+### 4. Running Tests
+```bash
+# Run E2E tests (when implemented)
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+```
 
-This project is built with:
+### 5. Stopping the Application
+```bash
+docker-compose down
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Review Checklist
+- [ ] Application starts successfully
+- [ ] Frontend is accessible
+- [ ] Backend API responds
+- [ ] Database initializes correctly
+- [ ] User authentication works
 
-## How can I deploy this project?
+## Troubleshooting
+- Ensure all ports (80, 8080, 5432) are available
+- Check Docker and Docker Compose versions
+- Verify network connectivity
 
-Simply open [Lovable](https://lovable.dev/projects/b1c7be00-4b60-43f3-be03-67e3b81ad66a) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Contact
+For issues during review, please contact: [Your Contact Information]

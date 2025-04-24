@@ -1,0 +1,41 @@
+
+version: '3.8'
+
+services:
+  test-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - VITE_API_BASE_URL=http://test-backend:8080
+    depends_on:
+      - test-backend
+
+  test-backend:
+    build:
+      context: https://github.com/BarnaTB/leave-management-backend.git
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://test-db:5432/leaves_test
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+    depends_on:
+      - test-db
+
+  test-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=leaves_test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    volumes:
+      - ./e2e:/e2e
+    working_dir: /e2e
+    command: npx playwright test
+    depends_on:
+      - test-frontend
+      - test-backend
