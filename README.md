@@ -1,3 +1,4 @@
+
 # Leave Management System - Project Review Guide
 
 ## Prerequisites
@@ -5,7 +6,7 @@
 - Docker Compose
 - Git
 
-## Quick Start Guide
+## Quick Start Guide for Reviewers
 
 ### 1. Clone the Repository
 ```bash
@@ -26,7 +27,7 @@ VITE_API_BASE_URL=http://localhost:8080
 
 ### 3. Running the Application
 ```bash
-# Start the entire stack
+# Start the entire stack (this will automatically build both frontend and backend)
 docker-compose up -d
 
 # Access the application
@@ -36,14 +37,20 @@ docker-compose up -d
 
 ### 4. Running Tests
 ```bash
-# Run E2E tests (when implemented)
-docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+# Run E2E tests
+docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
 ```
 
 ### 5. Stopping the Application
 ```bash
 docker-compose down
 ```
+
+## How the Stack Works
+- **Frontend**: React application with Vite, using ShadCN UI and Tailwind CSS
+- **Backend**: Spring Boot application with Gradle
+- **Database**: PostgreSQL for data storage
+- **Authentication**: Azure Active Directory integration through MSAL
 
 ## Review Checklist
 - [ ] Application starts successfully
@@ -59,16 +66,17 @@ For reviewing the application, use the following test credentials:
 - **Email**: reviewer@example.com
 - **Password**: TestReview2024!
 
-### Additional Test Scenarios
+### Key Test Scenarios
 1. Login with the provided credentials
 2. Navigate through different sections
-3. Test leave application process
-4. Verify approval workflows
+3. Apply for leave and track its status
+4. Approve/reject leave requests (if logged in as a manager)
+5. Generate leave reports
 
 ## Troubleshooting
-- Ensure all ports (80, 8080, 5432) are available
-- Check Docker and Docker Compose versions
-- Verify network connectivity
+- **Common Docker Issues**: Ensure all ports (80, 8080, 5432) are available on your system
+- **Backend API Not Responding**: Check the backend container logs using `docker-compose logs backend`
+- **Database Connection Issues**: Verify the DB credentials in your `.env` file match those in the docker-compose.yml
 
 ## Contact
 For issues during review, please contact: [Your Contact Information]
