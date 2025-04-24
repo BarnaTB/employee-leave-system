@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { PublicClientApplication, AuthenticationResult } from "@azure/msal-browser";
 import { config } from "@/config";
 
