@@ -27,56 +27,77 @@ VITE_API_BASE_URL=http://localhost:8080
 
 ### 3. Running the Application
 ```bash
-# Start the entire stack (this will automatically build both frontend and backend)
+# Start the entire stack
 docker-compose up -d
 
-# Access the application
-# Frontend: http://localhost
-# Backend API: http://localhost:8080
+# Verify containers are running
+docker-compose ps
+
+# Check logs if needed
+docker-compose logs -f frontend
+docker-compose logs -f backend
 ```
 
-### 4. Running Tests
+### 4. Testing the Application
+
+1. Open your browser and navigate to `http://localhost`
+2. You should see the Microsoft login page
+3. Test login credentials:
+   - Click "Sign in with Microsoft"
+   - Use your Microsoft account credentials
+   - You will be redirected to the dashboard upon successful authentication
+
+### 5. Features to Test
+
+#### Employee Features
+- View leave balance
+- Apply for leave
+- Check leave history
+- View team calendar
+
+#### Manager Features (if you have manager role)
+- Approve/reject leave requests
+- View team leave calendar
+- Generate reports
+
+#### Admin Features (if you have admin role)
+- Manage departments
+- Configure leave types
+- Generate reports
+- Manage user roles
+
+### 6. Running E2E Tests
 ```bash
 # Run E2E tests
 docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
 ```
 
-### 5. Stopping the Application
+### 7. Stopping the Application
 ```bash
+# Stop all containers
 docker-compose down
+
+# To remove volumes as well (this will delete database data)
+docker-compose down -v
 ```
 
-## How the Stack Works
-- **Frontend**: React application with Vite, using ShadCN UI and Tailwind CSS
-- **Backend**: Spring Boot application with Gradle
-- **Database**: PostgreSQL for data storage
-- **Authentication**: Azure Active Directory integration through MSAL
-
-## Review Checklist
-- [ ] Application starts successfully
-- [ ] Frontend is accessible
-- [ ] Backend API responds
-- [ ] Database initializes correctly
-- [ ] User authentication works
-
-## Test Credentials
-
-For reviewing the application, use the following test credentials:
-
-- **Email**: reviewer@example.com
-- **Password**: TestReview2024!
-
-### Key Test Scenarios
-1. Login with the provided credentials
-2. Navigate through different sections
-3. Apply for leave and track its status
-4. Approve/reject leave requests (if logged in as a manager)
-5. Generate leave reports
-
 ## Troubleshooting
-- **Common Docker Issues**: Ensure all ports (80, 8080, 5432) are available on your system
-- **Backend API Not Responding**: Check the backend container logs using `docker-compose logs backend`
-- **Database Connection Issues**: Verify the DB credentials in your `.env` file match those in the docker-compose.yml
 
-## Contact
-For issues during review, please contact: [Your Contact Information]
+### Common Issues
+
+1. **Cannot access frontend**
+   - Verify that containers are running: `docker-compose ps`
+   - Check frontend logs: `docker-compose logs frontend`
+   - Ensure port 80 is not in use by another application
+
+2. **API Connection Issues**
+   - Verify backend is running: `docker-compose logs backend`
+   - Check if VITE_API_BASE_URL is correctly set in your .env file
+   - Ensure port 8080 is available
+
+3. **Database Issues**
+   - Check database logs: `docker-compose logs db`
+   - Verify database credentials in .env file match docker-compose.yml
+
+For further assistance, please contact: [Your Contact Information]
+
