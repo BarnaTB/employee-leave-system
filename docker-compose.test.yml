@@ -3,14 +3,14 @@ version: '3.8'
 
 services:
   test-frontend:
-    image: yourusername/leave-management-frontend:latest
+    image: barnatumuhairwe/leave-management-frontend:latest
     environment:
       - VITE_API_BASE_URL=http://test-backend:8080
     depends_on:
       - test-backend
 
   test-backend:
-    image: yourusername/leave-management-backend:latest
+    image: barnatumuhairwe/leave-management-backend:latest
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://test-db:5432/leaves_test
       - SPRING_DATASOURCE_USERNAME=postgres
