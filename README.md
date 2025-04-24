@@ -1,4 +1,3 @@
-
 # Leave Management System - Project Review Guide
 
 ## Prerequisites
@@ -52,6 +51,19 @@ docker-compose down
 - [ ] Backend API responds
 - [ ] Database initializes correctly
 - [ ] User authentication works
+
+## Test Credentials
+
+For reviewing the application, use the following test credentials:
+
+- **Email**: reviewer@example.com
+- **Password**: TestReview2024!
+
+### Additional Test Scenarios
+1. Login with the provided credentials
+2. Navigate through different sections
+3. Test leave application process
+4. Verify approval workflows
 
 ## Troubleshooting
 - Ensure all ports (80, 8080, 5432) are available
