@@ -10,6 +10,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Install vite explicitly
+RUN npm install --save-dev vite@latest
+
 # Copy source code
 COPY . .
 
