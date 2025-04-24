@@ -3,18 +3,14 @@ version: '3.8'
 
 services:
   test-frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: yourusername/leave-management-frontend:latest
     environment:
       - VITE_API_BASE_URL=http://test-backend:8080
     depends_on:
       - test-backend
 
   test-backend:
-    build:
-      context: https://github.com/BarnaTB/leave-management-backend.git
-      dockerfile: Dockerfile
+    image: yourusername/leave-management-backend:latest
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://test-db:5432/leaves_test
       - SPRING_DATASOURCE_USERNAME=postgres
