@@ -135,10 +135,10 @@ export function LeaveCalendar() {
               onSelect={setSelectedDate}
               className="rounded-md border shadow pointer-events-auto"
               components={{
-                DayContent: (props) => (
+                DayContent: ({ date }) => (
                   <>
-                    <div>{props.day.day}</div>
-                    {dayWithLeaves(props.date)}
+                    {date.getDate()}
+                    {dayWithLeaves(date)}
                   </>
                 ),
               }}
