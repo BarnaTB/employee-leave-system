@@ -1,8 +1,9 @@
 
 import axios from 'axios';
+import { config } from '@/config';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: config.api.baseUrl,
 });
 
 // Add a request interceptor to inject the JWT token
@@ -62,4 +63,39 @@ export const leaveApi = {
   
   deleteLeaveType: (id: number) => 
     api.delete(`/admin/leave-types/${id}`),
+};
+
+// New Department API endpoints
+export const departmentApi = {
+  // Department management
+  createDepartment: (data: { name: string }) => 
+    api.post('/departments', data),
+  
+  assignEmployeeToDepartment: (data: { employeeId: number; departmentId: number }) => 
+    api.post('/departments/assign-employee', data),
+  
+  getEmployeesOnLeaveByDepartment: (departmentId: number) => 
+    api.get(`/departments/${departmentId}/employees-on-leave`),
+  
+  updateEmployeeRole: (employeeId: number, newRole: string) => 
+    api.patch(`/departments/employees/${employeeId}/role?newRole=${newRole}`),
+    
+  // Department list
+  getAllDepartments: () => 
+    api.get('/departments'),
+    
+  getDepartmentById: (id: number) => 
+    api.get(`/departments/${id}`),
+};
+
+// Report generation API endpoints
+export const reportApi = {
+  generateEmployeeLeaveReport: (employeeId: number) => 
+    api.get(`/admin/employee/${employeeId}/report`, { responseType: 'blob' }),
+  
+  generateDepartmentLeaveReport: (departmentId: number) => 
+    api.get(`/admin/department/${departmentId}/report`, { responseType: 'blob' }),
+  
+  generateLeaveTypeReport: (leaveTypeId: number) => 
+    api.get(`/admin/leave-type/${leaveTypeId}/report`, { responseType: 'blob' }),
 };

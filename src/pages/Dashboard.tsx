@@ -11,6 +11,9 @@ import { LeaveHistory } from '@/components/LeaveHistory';
 import { ApplyLeave } from '@/components/ApplyLeave';
 import { ManagerApprovals } from '@/components/ManagerApprovals';
 import { AdminDashboard } from '@/components/AdminDashboard';
+import { DepartmentManagement } from '@/components/DepartmentManagement';
+import { LeaveCalendar } from '@/components/LeaveCalendar';
+import { ReportGeneration } from '@/components/ReportGeneration';
 import { toast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
@@ -39,6 +42,11 @@ const Dashboard = () => {
     return <div>Loading...</div>;
   }
 
+  // Calculate the number of tabs to determine the grid columns
+  let tabCount = 5; // Default tabs
+  if (isManager) tabCount++;
+  if (isAdmin) tabCount += 3; // Admin, Departments, Reports
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -55,15 +63,21 @@ const Dashboard = () => {
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-5">
+            <TabsList className={`grid w-full grid-cols-2 md:grid-cols-${Math.min(tabCount, 8)}`}>
               <TabsTrigger value="balance">Leave Balance</TabsTrigger>
               <TabsTrigger value="apply">Apply for Leave</TabsTrigger>
               <TabsTrigger value="history">Leave History</TabsTrigger>
+              <TabsTrigger value="calendar">Leave Calendar</TabsTrigger>
+              <TabsTrigger value="team">Team View</TabsTrigger>
               {isManager && (
                 <TabsTrigger value="manager">Manager Approvals</TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="admin">Admin Panel</TabsTrigger>
+                <>
+                  <TabsTrigger value="admin">Admin Panel</TabsTrigger>
+                  <TabsTrigger value="departments">Departments</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
+                </>
               )}
             </TabsList>
             
@@ -79,6 +93,24 @@ const Dashboard = () => {
               <LeaveHistory employeeId={employeeId} />
             </TabsContent>
             
+            <TabsContent value="calendar" className="mt-6">
+              <LeaveCalendar />
+            </TabsContent>
+            
+            <TabsContent value="team" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Team View</CardTitle>
+                  <CardDescription>View your team members' leave status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    This feature will show a calendar view of your team members' leave status.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
             {isManager && (
               <TabsContent value="manager" className="mt-6">
                 <ManagerApprovals />
@@ -86,9 +118,19 @@ const Dashboard = () => {
             )}
             
             {isAdmin && (
-              <TabsContent value="admin" className="mt-6">
-                <AdminDashboard />
-              </TabsContent>
+              <>
+                <TabsContent value="admin" className="mt-6">
+                  <AdminDashboard />
+                </TabsContent>
+                
+                <TabsContent value="departments" className="mt-6">
+                  <DepartmentManagement />
+                </TabsContent>
+                
+                <TabsContent value="reports" className="mt-6">
+                  <ReportGeneration />
+                </TabsContent>
+              </>
             )}
           </Tabs>
         </div>

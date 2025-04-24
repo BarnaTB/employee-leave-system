@@ -1,14 +1,14 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import axios from 'axios';
+import { config } from '@/config';
 
 // MSAL configuration
 const msalConfig = {
   auth: {
-    clientId: import.meta.env.VITE_MSAL_CLIENT_ID || 'your-client-id-here',
-    authority: 'https://login.microsoftonline.com/common',
-    redirectUri: window.location.origin,
+    clientId: config.msal.clientId,
+    authority: config.msal.authority,
+    redirectUri: config.msal.redirectUri,
   }
 };
 
@@ -77,7 +77,7 @@ export const useMsal = () => {
   const authenticateWithBackend = useCallback(async (msalResponse: AuthenticationResult) => {
     try {
       const response = await axios.post(
-        "/api/auth/token",
+        `${config.api.baseUrl}/auth/token`,
         {},
         {
           headers: {
