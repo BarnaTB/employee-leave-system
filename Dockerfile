@@ -13,8 +13,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application - using vite build instead of npm run build
+RUN npx vite build
 
 # Production stage
 FROM nginx:alpine
