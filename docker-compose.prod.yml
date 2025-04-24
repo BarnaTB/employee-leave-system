@@ -1,4 +1,3 @@
-
 version: '3.8'
 
 services:
@@ -15,7 +14,7 @@ services:
       - VITE_API_BASE_URL=https://api.yourdomain.com
 
   backend:
-    image: barnatumuhairwe/leave-management-api:latest
+    image: leave-management-api:latest
     restart: always
     ports:
       - "8080:8080"
