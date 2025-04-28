@@ -5,6 +5,7 @@ import { MsalContext } from '@/providers/MsalProvider';
 import { config } from '@/config';
 import { authenticateWithBackend } from '@/services/authService';
 import { handleAuthenticationSuccess } from '@/utils/tokenUtils';
+import { toast } from '@/hooks/use-toast';
 
 export const useTokenAcquisition = () => {
   const { msalInstance, isInitialized } = useContext(MsalContext);
@@ -15,11 +16,14 @@ export const useTokenAcquisition = () => {
     }
 
     try {
+      // Try silent token acquisition first
+      console.log("Attempting silent token acquisition...");
       const response = await msalInstance.acquireTokenSilent({
         scopes: ["openid", "profile", "email"],
         account: msalInstance.getActiveAccount()!,
       });
       
+      console.log("Silent token acquisition successful");
       const jwtToken = await authenticateWithBackend(response);
       handleAuthenticationSuccess(jwtToken, response);
       return { msalResponse: response, jwtToken };
@@ -32,6 +36,13 @@ export const useTokenAcquisition = () => {
         console.log("Acquiring token with popup using redirectUri:", redirectUri);
         console.log("Current environment:", config.environment);
         
+        // Clear any existing interactions first to prevent "interaction_in_progress" errors
+        if (msalInstance.getActiveAccount() === null) {
+          console.log("No active account, redirecting to login page");
+          // No need to continue with popup if there's no active account
+          throw new Error("No active account");
+        }
+        
         const response = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],
           redirectUri: redirectUri
@@ -42,6 +53,14 @@ export const useTokenAcquisition = () => {
         return { msalResponse: response, jwtToken };
       } catch (popupError) {
         console.error("Failed to acquire token via popup", popupError);
+        
+        // Show an appropriate error message
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Failed to authenticate. Please try logging in again.",
+        });
+        
         throw popupError;
       }
     }

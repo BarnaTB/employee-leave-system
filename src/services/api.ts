@@ -8,24 +8,38 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
   }
 });
 
-// Add a request interceptor to inject the JWT token
+// Add a request interceptor to inject the JWT token and debug information
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('jwtToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add origin header for CORS
+    config.headers.Origin = window.location.origin;
+    
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+      headers: config.headers,
+      withCredentials: config.withCredentials
+    });
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add a response interceptor to handle common errors
 api.interceptors.response.use(
   (response) => {
+    console.log(`API Response: ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
@@ -35,6 +49,11 @@ api.interceptors.response.use(
     if (error.response) {
       // Server returned an error response (4xx, 5xx)
       console.error('Server Error:', error.response.status, error.response.data);
+      console.error('Request that caused error:', {
+        url: error.config.url,
+        method: error.config.method,
+        headers: error.config.headers
+      });
     } else if (error.request) {
       // Request was made but no response received (network error)
       console.error('Network Error:', error.request);

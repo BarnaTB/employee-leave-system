@@ -4,7 +4,7 @@ const getEnvironmentType = () => {
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'local';
-  } else if (hostname.includes('lovable.app')) {
+  } else if (hostname.includes('lovable.app') || hostname.includes('lovableproject.com')) {
     return 'preview';
   } else {
     return 'production';
@@ -44,8 +44,8 @@ export const config = {
         case 'local':
           return "http://localhost:8080/api";
         case 'preview':
-          // When in preview mode, we need to call the backend on its public URL
-          return "http://localhost:8080/api"; // Update this with your preview backend URL if different
+          // When in preview mode, use the correct API URL
+          return "https://api.yourdomain.com/api"; // Update this with actual preview backend URL
         default:
           return "https://api.yourdomain.com/api"; // Production fallback
       }
@@ -54,9 +54,11 @@ export const config = {
   environment: getEnvironmentType()
 };
 
+// Log important configuration details for debugging
 console.log("App config:", {
   environment: config.environment,
   apiBaseUrl: config.api.baseUrl,
   redirectUri: config.msal.redirectUri,
-  origin: window.location.origin
+  origin: window.location.origin,
+  hostname: window.location.hostname
 });

@@ -17,13 +17,19 @@ public class WebConfig implements WebMvcConfigurer {
                     "http://localhost",
                     "http://localhost:80",
                     "http://localhost:3000",
+                    "http://localhost:8080",
                     "http://127.0.0.1",
-                    "http://127.0.0.1:80",
+                    "http://127.0.0.1:80", 
                     "http://127.0.0.1:3000",
-                    "http://frontend" // Docker service name
+                    "http://127.0.0.1:8080",
+                    "http://frontend",
+                    "https://b1c7be00-4b60-43f3-be03-67e3b81ad66a.lovableproject.com",
+                    "https://*.lovable.app"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .exposedHeaders("Authorization")
+                .allowCredentials(true)
+                .maxAge(3600); // 1 hour max age
     }
 }
