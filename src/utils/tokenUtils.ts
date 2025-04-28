@@ -36,3 +36,23 @@ export const storeAuthData = (jwtToken: string, msalResponse: AuthenticationResu
   }));
 };
 
+export const handleAuthenticationSuccess = (jwtToken: string, msalResponse: AuthenticationResult) => {
+  storeAuthData(jwtToken, msalResponse);
+};
+
+export const getUserInfoFromStorage = (): {
+  employeeId: number | null;
+  isManager: boolean;
+  isAdmin: boolean;
+  name: string | null;
+  email: string | null;
+} | null => {
+  const userInfoStr = localStorage.getItem('userInfo');
+  if (!userInfoStr) return null;
+  try {
+    return JSON.parse(userInfoStr);
+  } catch (e) {
+    console.error('Error parsing user info from localStorage:', e);
+    return null;
+  }
+};
