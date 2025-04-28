@@ -8,12 +8,15 @@ export const config = {
     // Add additional valid redirect URIs that can be used
     validRedirectUris: [
       "http://localhost", 
-      "http://localhost:80", 
+      "http://localhost:80",
+      "http://localhost:3000",
       "http://127.0.0.1",
-      "http://127.0.0.1:80"
+      "http://127.0.0.1:80",
+      "http://127.0.0.1:3000"
     ]
   },
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "/api", // Default to relative path for local development
+    // Set a default API URL that works for both development and production
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api",
   }
 };

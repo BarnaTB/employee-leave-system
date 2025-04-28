@@ -1,6 +1,6 @@
 
 import React, { ReactNode, useEffect, useState } from "react";
-import { PublicClientApplication, AuthenticationResult, LogLevel } from "@azure/msal-browser";
+import { PublicClientApplication, AuthenticationResult, LogLevel, BrowserCacheLocation } from "@azure/msal-browser";
 import { config } from "@/config";
 
 // Create a React context to hold the initialized MSAL instance
@@ -23,57 +23,65 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
   useEffect(() => {
     const initializeMsal = async () => {
       // Determine if running in Docker container or local environment
-      const isDocker = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1';
+      const isLocalDev = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
       
-      const redirectUri = isDocker ? config.msal.redirectUriForDocker : config.msal.redirectUri;
+      const redirectUri = isLocalDev ? 
+        `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}` : 
+        config.msal.redirectUri;
       
       console.log("MSAL initializing with redirectUri:", redirectUri);
       console.log("Current origin:", window.location.origin);
       
-      const instance = new PublicClientApplication({
-        auth: {
-          clientId: config.msal.clientId,
-          authority: config.msal.authority,
-          redirectUri: redirectUri,
-        },
-        cache: {
-          cacheLocation: "sessionStorage",
-          storeAuthStateInCookie: true
-        },
-        system: {
-          loggerOptions: {
-            loggerCallback: (level, message, containsPii) => {
-              if (containsPii) {
-                return;
-              }
-              switch (level) {
-                case LogLevel.Error:
-                  console.error('MSAL:', message);
-                  break;
-                case LogLevel.Warning:
-                  console.warn('MSAL:', message);
-                  break;
-                case LogLevel.Info:
-                  console.info('MSAL:', message);
-                  break;
-                case LogLevel.Verbose:
-                  console.debug('MSAL:', message);
-                  break;
-                default:
-                  console.log('MSAL:', message);
-              }
-            },
-            logLevel: LogLevel.Verbose
+      try {
+        const instance = new PublicClientApplication({
+          auth: {
+            clientId: config.msal.clientId,
+            authority: config.msal.authority,
+            redirectUri: redirectUri,
+            navigateToLoginRequestUrl: true
+          },
+          cache: {
+            cacheLocation: BrowserCacheLocation.SessionStorage,
+            storeAuthStateInCookie: true
+          },
+          system: {
+            allowRedirectInIframe: true,
+            loggerOptions: {
+              loggerCallback: (level, message, containsPii) => {
+                if (containsPii) {
+                  return;
+                }
+                switch (level) {
+                  case LogLevel.Error:
+                    console.error('MSAL:', message);
+                    break;
+                  case LogLevel.Warning:
+                    console.warn('MSAL:', message);
+                    break;
+                  case LogLevel.Info:
+                    console.info('MSAL:', message);
+                    break;
+                  case LogLevel.Verbose:
+                    console.debug('MSAL:', message);
+                    break;
+                  default:
+                    console.log('MSAL:', message);
+                }
+              },
+              logLevel: LogLevel.Verbose
+            }
           }
-        }
-      });
+        });
 
-      await instance.initialize();
-      setMsalInstance(instance);
-      setIsInitialized(true);
-      
-      console.log("MSAL initialized successfully");
+        await instance.initialize();
+        setMsalInstance(instance);
+        setIsInitialized(true);
+        
+        console.log("MSAL initialized successfully");
+      } catch (error) {
+        console.error("Failed to initialize MSAL:", error);
+      }
     };
 
     initializeMsal().catch(error => {
