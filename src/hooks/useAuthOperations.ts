@@ -28,6 +28,15 @@ export const useAuthOperations = () => {
       
       console.log("Logging in with redirectUri:", redirectUri);
       console.log("Current environment:", config.environment);
+      console.log("Current API baseUrl:", config.api.baseUrl);
+      console.log("Valid redirect URIs:", config.msal.validRedirectUris);
+      
+      // Make sure current origin is in the valid redirectUri list
+      if (!config.msal.validRedirectUris.includes(redirectUri)) {
+        console.warn("Current origin not in valid redirect URIs list. Adding it dynamically.");
+        // Dynamically add the current origin to validRedirectUris
+        config.msal.validRedirectUris.push(redirectUri);
+      }
       
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
@@ -53,7 +62,7 @@ export const useAuthOperations = () => {
         toast({
           variant: "destructive",
           title: "Network Error",
-          description: "Cannot connect to authentication service due to CORS or network issues.",
+          description: `Cannot connect to authentication service at ${config.api.baseUrl} due to CORS or network issues.`,
         });
       } else {
         toast({

@@ -18,6 +18,10 @@ export const useTokenAcquisition = () => {
     try {
       // Try silent token acquisition first
       console.log("Attempting silent token acquisition...");
+      console.log("Current environment:", config.environment);
+      console.log("Current origin:", window.location.origin);
+      console.log("API base URL:", config.api.baseUrl);
+      
       const response = await msalInstance.acquireTokenSilent({
         scopes: ["openid", "profile", "email"],
         account: msalInstance.getActiveAccount()!,
@@ -35,6 +39,12 @@ export const useTokenAcquisition = () => {
         
         console.log("Acquiring token with popup using redirectUri:", redirectUri);
         console.log("Current environment:", config.environment);
+        console.log("Valid redirect URIs:", config.msal.validRedirectUris);
+        
+        // Make sure current origin is in the valid redirectUri list
+        if (!config.msal.validRedirectUris.includes(redirectUri)) {
+          console.warn("Current origin not in valid redirect URIs list. This may cause issues.");
+        }
         
         // Clear any existing interactions first to prevent "interaction_in_progress" errors
         if (msalInstance.getActiveAccount() === null) {

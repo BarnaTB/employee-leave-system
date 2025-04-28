@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { config } from '@/config';
 
@@ -25,7 +26,9 @@ api.interceptors.request.use(
     
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
       headers: config.headers,
-      withCredentials: config.withCredentials
+      withCredentials: config.withCredentials,
+      baseURL: config.baseURL,
+      environment: window.location.hostname.includes('lovable') ? 'preview' : 'local'
     });
     
     return config;
@@ -52,11 +55,19 @@ api.interceptors.response.use(
       console.error('Request that caused error:', {
         url: error.config.url,
         method: error.config.method,
-        headers: error.config.headers
+        headers: error.config.headers,
+        baseURL: error.config.baseURL,
+        environment: config.environment
       });
     } else if (error.request) {
       // Request was made but no response received (network error)
       console.error('Network Error:', error.request);
+      console.error('Request details:', {
+        url: error.config.url,
+        method: error.config.method,
+        baseURL: error.config.baseURL,
+        environment: config.environment
+      });
     } else {
       // Error in setting up the request
       console.error('Request Error:', error.message);

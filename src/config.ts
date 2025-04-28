@@ -30,6 +30,7 @@ export const config = {
       "http://127.0.0.1",
       "http://127.0.0.1:80",
       "http://127.0.0.1:3000",
+      "https://preview--employee-leave-system.lovable.app", // Add the preview URL
       getCurrentOrigin(), // Dynamically add current origin
     ]
   },
@@ -44,8 +45,8 @@ export const config = {
         case 'local':
           return "http://localhost:8080/api";
         case 'preview':
-          // When in preview mode, use the correct API URL
-          return "https://api.yourdomain.com/api"; // Update this with actual preview backend URL
+          // Use the same local Docker backend URL for preview mode
+          return "http://localhost:8080/api";
         default:
           return "https://api.yourdomain.com/api"; // Production fallback
       }

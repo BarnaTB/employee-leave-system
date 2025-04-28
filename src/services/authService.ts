@@ -11,6 +11,7 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
     console.log("Backend API URL:", `${config.api.baseUrl}/auth/token`);
     console.log("Current Origin:", window.location.origin);
     console.log("Current Environment:", config.environment);
+    console.log("Using API URL for environment:", config.environment);
     
     // Send the token in the Authorization header, properly formatted as "Bearer {token}"
     const response = await axios.get<BackendAuthResponse>(
@@ -34,14 +35,18 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
     console.error("Request details:", {
       url: `${config.api.baseUrl}/auth/token`,
       origin: window.location.origin,
-      environment: config.environment
+      environment: config.environment,
+      headers: {
+        'Origin': window.location.origin,
+        'Content-Type': 'application/json'
+      }
     });
     
     if (error.message?.includes('Network Error') || !error.response) {
       toast({
         variant: "destructive",
         title: "Network Error",
-        description: "Cannot connect to authentication service. Please ensure the backend is running and CORS is properly configured.",
+        description: `Cannot connect to authentication service at ${config.api.baseUrl}. Please ensure the backend is running and CORS is properly configured.`,
       });
     } else {
       toast({

@@ -24,6 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
                     "http://127.0.0.1:8080",
                     "http://frontend",
                     "https://b1c7be00-4b60-43f3-be03-67e3b81ad66a.lovableproject.com",
+                    "https://preview--employee-leave-system.lovable.app", // Add the specific preview URL
                     "https://*.lovable.app"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
