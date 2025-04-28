@@ -55,8 +55,15 @@ export const useMsal = () => {
     } catch (error) {
       console.log("Silent token acquisition failed, trying popup", error);
       try {
+        const isDocker = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+        const redirectUri = isDocker ? config.msal.redirectUriForDocker : config.msal.redirectUri;
+        
+        console.log("Acquiring token with popup using redirectUri:", redirectUri);
+        
         const response = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],
+          redirectUri: redirectUri
         });
         
         await authenticateWithBackend(response);
@@ -69,6 +76,8 @@ export const useMsal = () => {
 
   const authenticateWithBackend = useCallback(async (msalResponse: AuthenticationResult) => {
     try {
+      console.log("Authenticating with backend using token:", msalResponse.accessToken.substring(0, 10) + "...");
+      
       const response = await axios.post(
         `${config.api.baseUrl}/auth/token`,
         {},
@@ -79,6 +88,7 @@ export const useMsal = () => {
         }
       );
 
+      console.log("Backend authentication successful");
       const jwtToken = response.data.token;
       
       const base64Url = jwtToken.split('.')[1];
@@ -122,9 +132,16 @@ export const useMsal = () => {
     }
 
     try {
+      // Determine if running in Docker container or local environment
+      const isDocker = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+      const redirectUri = isDocker ? config.msal.redirectUriForDocker : config.msal.redirectUri;
+      
+      console.log("Logging in with redirectUri:", redirectUri);
+      
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
-        redirectUri: config.msal.redirectUriForDocker,
+        redirectUri: redirectUri,
       });
       
       await authenticateWithBackend(response);

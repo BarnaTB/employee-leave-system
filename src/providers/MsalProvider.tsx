@@ -1,6 +1,6 @@
 
 import React, { ReactNode, useEffect, useState } from "react";
-import { PublicClientApplication, AuthenticationResult } from "@azure/msal-browser";
+import { PublicClientApplication, AuthenticationResult, LogLevel } from "@azure/msal-browser";
 import { config } from "@/config";
 
 // Create a React context to hold the initialized MSAL instance
@@ -22,11 +22,50 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
 
   useEffect(() => {
     const initializeMsal = async () => {
+      // Determine if running in Docker container or local environment
+      const isDocker = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+      
+      const redirectUri = isDocker ? config.msal.redirectUriForDocker : config.msal.redirectUri;
+      
+      console.log("MSAL initializing with redirectUri:", redirectUri);
+      console.log("Current origin:", window.location.origin);
+      
       const instance = new PublicClientApplication({
         auth: {
           clientId: config.msal.clientId,
           authority: config.msal.authority,
-          redirectUri: config.msal.redirectUri,
+          redirectUri: redirectUri,
+        },
+        cache: {
+          cacheLocation: "sessionStorage",
+          storeAuthStateInCookie: true
+        },
+        system: {
+          loggerOptions: {
+            loggerCallback: (level, message, containsPii) => {
+              if (containsPii) {
+                return;
+              }
+              switch (level) {
+                case LogLevel.Error:
+                  console.error('MSAL:', message);
+                  break;
+                case LogLevel.Warning:
+                  console.warn('MSAL:', message);
+                  break;
+                case LogLevel.Info:
+                  console.info('MSAL:', message);
+                  break;
+                case LogLevel.Verbose:
+                  console.debug('MSAL:', message);
+                  break;
+                default:
+                  console.log('MSAL:', message);
+              }
+            },
+            logLevel: LogLevel.Verbose
+          }
         }
       });
 
@@ -34,10 +73,12 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
       setMsalInstance(instance);
       setIsInitialized(true);
       
-      console.log("MSAL initialized with redirectUri:", config.msal.redirectUri);
+      console.log("MSAL initialized successfully");
     };
 
-    initializeMsal().catch(console.error);
+    initializeMsal().catch(error => {
+      console.error("Failed to initialize MSAL:", error);
+    });
   }, []);
 
   if (!isInitialized) {
