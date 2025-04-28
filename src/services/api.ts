@@ -1,11 +1,10 @@
-
 import axios from 'axios';
 import { config } from '@/config';
 
 const api = axios.create({
   baseURL: config.api.baseUrl,
-  // Add CORS support for development
-  withCredentials: false,
+  // Enable credentials for CORS requests
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

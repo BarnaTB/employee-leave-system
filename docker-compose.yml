@@ -9,7 +9,10 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_BASE_URL=http://localhost:8080
+      - VITE_API_BASE_URL=http://localhost:8080/api
+    # Add host.docker.internal to hosts file for container networking
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   backend:
     image: barnatumuhairwe/leave-management-backend:latest
