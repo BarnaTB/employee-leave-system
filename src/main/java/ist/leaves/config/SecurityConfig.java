@@ -64,11 +64,24 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));  // Allow all origins
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost",
+                "http://localhost:80",
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://127.0.0.1",
+                "http://127.0.0.1:80",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:8080",
+                "http://frontend",
+                "https://b1c7be00-4b60-43f3-be03-67e3b81ad66a.lovableproject.com",
+                "https://preview--employee-leave-system.lovable.app",
+                "https://id-preview--b1c7be00-4b60-43f3-be03-67e3b81ad66a.lovable.app"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-        // Note: allowCredentials is false because it can't be used with allowedOrigins("*")
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
