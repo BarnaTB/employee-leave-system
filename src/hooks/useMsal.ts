@@ -88,9 +88,9 @@ export const useMsal = () => {
       console.log("Authenticating with backend using token:", msalResponse.accessToken.substring(0, 10) + "...");
       console.log("Backend API URL:", `${config.api.baseUrl}/auth/token`);
       
-      const response = await axios.post(
+      // Changed from POST to GET to match the backend controller
+      const response = await axios.get(
         `${config.api.baseUrl}/auth/token`,
-        {},
         {
           headers: {
             'Authorization': `Bearer ${msalResponse.accessToken}`,
