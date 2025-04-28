@@ -1,23 +1,11 @@
 
 import { useContext, useState, useEffect, useCallback } from 'react';
 import { AuthenticationResult } from '@azure/msal-browser';
-import axios from 'axios';
 import { config } from '@/config';
 import { MsalContext } from '@/providers/MsalProvider';
-import { toast } from "@/hooks/use-toast";
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  jwtToken: string | null;
-  msalToken: string | null;
-  employeeId: number | null;
-  isManager: boolean;
-  isAdmin: boolean;
-  userDetails: {
-    name: string;
-    email: string;
-  } | null;
-}
+import { AuthState } from '@/types/auth';
+import { authenticateWithBackend } from '@/services/authService';
+import { parseJwtToken, storeAuthData } from '@/utils/tokenUtils';
 
 export const useMsal = () => {
   const { msalInstance, isInitialized } = useContext(MsalContext);
@@ -31,17 +19,25 @@ export const useMsal = () => {
     userDetails: null,
   });
 
-  useEffect(() => {
-    if (msalInstance && isInitialized) {
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length > 0) {
-        msalInstance.setActiveAccount(accounts[0]);
-        acquireToken().catch(error => {
-          console.error("Failed to acquire token on initialization:", error);
-        });
-      }
-    }
-  }, [msalInstance, isInitialized]);
+  const handleAuthenticationSuccess = useCallback(async (msalResponse: AuthenticationResult) => {
+    const jwtToken = await authenticateWithBackend(msalResponse);
+    const decodedToken = parseJwtToken(jwtToken);
+    
+    storeAuthData(jwtToken, msalResponse);
+    
+    setAuthState({
+      isAuthenticated: true,
+      jwtToken,
+      msalToken: msalResponse.accessToken,
+      employeeId: decodedToken.employeeId || null,
+      isManager: decodedToken.isManager || false,
+      isAdmin: decodedToken.isAdmin || false,
+      userDetails: {
+        name: msalResponse.account?.name || '',
+        email: msalResponse.account?.username || '',
+      },
+    });
+  }, []);
 
   const acquireToken = useCallback(async () => {
     if (!msalInstance || !isInitialized) {
@@ -54,12 +50,11 @@ export const useMsal = () => {
         account: msalInstance.getActiveAccount()!,
       });
       
-      await authenticateWithBackend(response);
+      await handleAuthenticationSuccess(response);
       return response;
     } catch (error) {
       console.log("Silent token acquisition failed, trying popup", error);
       try {
-        // Get current URL to use as redirect URI for local environment
         const isLocalDev = window.location.hostname === 'localhost' || 
                           window.location.hostname === '127.0.0.1';
         
@@ -74,90 +69,26 @@ export const useMsal = () => {
           redirectUri: redirectUri
         });
         
-        await authenticateWithBackend(response);
+        await handleAuthenticationSuccess(response);
         return response;
       } catch (popupError) {
         console.error("Failed to acquire token via popup", popupError);
         throw popupError;
       }
     }
-  }, [msalInstance, isInitialized]);
+  }, [msalInstance, isInitialized, handleAuthenticationSuccess]);
 
-  const authenticateWithBackend = useCallback(async (msalResponse: AuthenticationResult) => {
-    try {
-      console.log("Authenticating with backend using token:", msalResponse.accessToken.substring(0, 10) + "...");
-      console.log("Backend API URL:", `${config.api.baseUrl}/auth/token`);
-      
-      // Changed from POST to GET to match the backend controller
-      const response = await axios.get(
-        `${config.api.baseUrl}/auth/token`,
-        {
-          headers: {
-            'Authorization': `Bearer ${msalResponse.accessToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        }
-      );
-
-      console.log("Backend authentication successful", response.data);
-      const jwtToken = response.data.token;
-      
-      try {
-        const base64Url = jwtToken.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        
-        const decodedToken = JSON.parse(jsonPayload);
-        
-        setAuthState({
-          isAuthenticated: true,
-          jwtToken,
-          msalToken: msalResponse.accessToken,
-          employeeId: decodedToken.employeeId || null,
-          isManager: decodedToken.roles?.includes('MANAGER') || false,
-          isAdmin: decodedToken.roles?.includes('ADMIN') || false,
-          userDetails: {
-            name: msalResponse.account?.name || '',
-            email: msalResponse.account?.username || '',
-          },
-        });
-
-        localStorage.setItem('jwtToken', jwtToken);
-        localStorage.setItem('userInfo', JSON.stringify({
-          employeeId: decodedToken.employeeId,
-          isManager: decodedToken.roles?.includes('MANAGER') || false,
-          isAdmin: decodedToken.roles?.includes('ADMIN') || false,
-          name: msalResponse.account?.name,
-          email: msalResponse.account?.username,
-        }));
-      } catch (tokenError) {
-        console.error("Error parsing JWT token:", tokenError);
-        throw new Error("Invalid token format received from server");
-      }
-    } catch (error: any) {
-      console.error("Error authenticating with backend:", error);
-      
-      // Check if it's a CORS error
-      if (error.message?.includes('Network Error') || !error.response) {
-        toast({
-          variant: "destructive",
-          title: "Network Error",
-          description: "Cannot connect to authentication service. Please ensure the backend is running and CORS is properly configured.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: `Authentication Error (${error.response?.status || 'Unknown'})`,
-          description: error.response?.data?.message || error.message || "Failed to authenticate with backend",
+  useEffect(() => {
+    if (msalInstance && isInitialized) {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        msalInstance.setActiveAccount(accounts[0]);
+        acquireToken().catch(error => {
+          console.error("Failed to acquire token on initialization:", error);
         });
       }
-      
-      throw error;
     }
-  }, []);
+  }, [msalInstance, isInitialized, acquireToken]);
 
   const login = useCallback(async () => {
     if (!msalInstance || !isInitialized) {
@@ -165,7 +96,6 @@ export const useMsal = () => {
     }
 
     try {
-      // Get current URL to use as redirect URI for local environment
       const isLocalDev = window.location.hostname === 'localhost' || 
                         window.location.hostname === '127.0.0.1';
       
@@ -180,13 +110,13 @@ export const useMsal = () => {
         redirectUri: redirectUri,
       });
       
-      await authenticateWithBackend(response);
+      await handleAuthenticationSuccess(response);
       return response;
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
     }
-  }, [msalInstance, isInitialized, authenticateWithBackend]);
+  }, [msalInstance, isInitialized, handleAuthenticationSuccess]);
 
   const logout = useCallback(() => {
     if (!msalInstance || !isInitialized) {
@@ -223,3 +153,4 @@ export const useMsal = () => {
     userDetails: authState.userDetails,
   };
 };
+
