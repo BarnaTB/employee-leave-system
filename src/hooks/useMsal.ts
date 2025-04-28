@@ -1,3 +1,4 @@
+
 import { useContext, useState, useEffect, useCallback } from 'react';
 import { AuthenticationResult } from '@azure/msal-browser';
 import axios from 'axios';
@@ -123,6 +124,7 @@ export const useMsal = () => {
     try {
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
+        redirectUri: config.msal.redirectUriForDocker,
       });
       
       await authenticateWithBackend(response);

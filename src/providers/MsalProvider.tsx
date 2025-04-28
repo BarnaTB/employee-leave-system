@@ -33,6 +33,8 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
       await instance.initialize();
       setMsalInstance(instance);
       setIsInitialized(true);
+      
+      console.log("MSAL initialized with redirectUri:", config.msal.redirectUri);
     };
 
     initializeMsal().catch(console.error);
