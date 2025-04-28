@@ -45,8 +45,8 @@ export const config = {
         case 'local':
           return "http://localhost:8080/api";
         case 'preview':
-          // Use the same local Docker backend URL for preview mode
-          return "http://localhost:8080/api";
+          // For preview, use a publicly available API endpoint instead of localhost
+          return "https://api.yourdomain.com/api"; // Replace with your actual production API
         default:
           return "https://api.yourdomain.com/api"; // Production fallback
       }

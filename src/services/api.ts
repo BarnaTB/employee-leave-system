@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { config } from '@/config';
 
@@ -20,9 +19,6 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Add origin header for CORS
-    config.headers.Origin = window.location.origin;
     
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
       headers: config.headers,

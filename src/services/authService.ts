@@ -21,7 +21,6 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
           'Authorization': `Bearer ${msalResponse.accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': window.location.origin,
           'X-Requested-With': 'XMLHttpRequest'
         },
         withCredentials: true,
@@ -36,10 +35,6 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
       url: `${config.api.baseUrl}/auth/token`,
       origin: window.location.origin,
       environment: config.environment,
-      headers: {
-        'Origin': window.location.origin,
-        'Content-Type': 'application/json'
-      }
     });
     
     if (error.message?.includes('Network Error') || !error.response) {
