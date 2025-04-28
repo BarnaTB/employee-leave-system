@@ -26,14 +26,11 @@ export const useTokenAcquisition = () => {
     } catch (error) {
       console.log("Silent token acquisition failed, trying popup", error);
       try {
-        const isLocalDev = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1';
-        
-        const redirectUri = isLocalDev ? 
-          `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}` : 
-          config.msal.redirectUri;
+        // Always use the current origin as the redirect URI for consistency
+        const redirectUri = window.location.origin;
         
         console.log("Acquiring token with popup using redirectUri:", redirectUri);
+        console.log("Current environment:", config.environment);
         
         const response = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],

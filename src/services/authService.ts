@@ -9,6 +9,7 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
   try {
     console.log("Authenticating with backend using token:", msalResponse.accessToken.substring(0, 10) + "...");
     console.log("Backend API URL:", `${config.api.baseUrl}/auth/token`);
+    console.log("Origin:", window.location.origin);
     
     // Send the token in the Authorization header, properly formatted as "Bearer {token}"
     const response = await axios.get<BackendAuthResponse>(
@@ -18,7 +19,9 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
           'Authorization': `Bearer ${msalResponse.accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Origin': window.location.origin
         },
+        withCredentials: true,
       }
     );
 

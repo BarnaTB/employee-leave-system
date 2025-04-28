@@ -14,14 +14,11 @@ export const useAuthOperations = () => {
     }
 
     try {
-      const isLocalDev = window.location.hostname === 'localhost' || 
-                        window.location.hostname === '127.0.0.1';
-      
-      const redirectUri = isLocalDev ? 
-        `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}` : 
-        config.msal.redirectUri;
+      // Always use the current origin as the redirect URI
+      const redirectUri = window.location.origin;
       
       console.log("Logging in with redirectUri:", redirectUri);
+      console.log("Current environment:", config.environment);
       
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
