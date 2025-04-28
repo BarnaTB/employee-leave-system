@@ -16,6 +16,14 @@ const getCurrentOrigin = () => {
   return window.location.origin;
 };
 
+// Check if we're running inside Docker
+const isRunningInDocker = () => {
+  // If the API environment variable is set to use the backend service name
+  // this is a good indication we're in Docker
+  const apiUrl = import.meta.env.VITE_API_BASE_URL;
+  return apiUrl && apiUrl.includes('backend:8080');
+};
+
 export const config = {
   msal: {
     clientId: "76b1492c-ee98-47e4-b0ea-f4ac905161c2",
@@ -43,7 +51,10 @@ export const config = {
       const env = getEnvironmentType();
       switch (env) {
         case 'local':
-          return "http://localhost:8080/api";
+          // If in Docker, we use the service name 'backend' as the hostname
+          return isRunningInDocker() ? 
+            "http://backend:8080/api" : 
+            "http://localhost:8080/api";
         case 'preview':
           // For preview, use a publicly available API endpoint instead of localhost
           return "https://api.yourdomain.com/api"; // Replace with your actual production API
@@ -61,5 +72,6 @@ console.log("App config:", {
   apiBaseUrl: config.api.baseUrl,
   redirectUri: config.msal.redirectUri,
   origin: window.location.origin,
-  hostname: window.location.hostname
+  hostname: window.location.hostname,
+  inDocker: isRunningInDocker()
 });

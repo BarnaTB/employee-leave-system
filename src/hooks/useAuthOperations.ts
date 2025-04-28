@@ -15,9 +15,8 @@ export const useAuthOperations = () => {
     }
 
     try {
-      // Clear any existing interactions first
+      // Clear any existing interactions and cache to ensure a fresh login
       try {
-        // This is a best-effort attempt that might throw if no interaction exists
         msalInstance.clearCache();
       } catch (e) {
         // Ignore errors when clearing cache
@@ -38,9 +37,16 @@ export const useAuthOperations = () => {
         config.msal.validRedirectUris.push(redirectUri);
       }
       
+      // Try to get active account first
+      const account = msalInstance.getAllAccounts()[0];
+      if (account) {
+        msalInstance.setActiveAccount(account);
+      }
+      
       const response = await msalInstance.loginPopup({
         scopes: ["openid", "profile", "email"],
         redirectUri: redirectUri,
+        prompt: "select_account" // Force account selection to avoid no_account_error
       });
       
       console.log("MSAL login successful, authenticating with backend...");
@@ -51,8 +57,14 @@ export const useAuthOperations = () => {
     } catch (error: any) {
       console.error("Login failed:", error);
       
-      // Show more specific error messages
-      if (error.errorCode === "interaction_in_progress") {
+      // Handle no_account_error specifically
+      if (error.errorCode === "no_account_error") {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "No account was selected. Please try again and select an account.",
+        });
+      } else if (error.errorCode === "interaction_in_progress") {
         toast({
           variant: "destructive",
           title: "Authentication Error",

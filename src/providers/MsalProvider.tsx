@@ -28,8 +28,15 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
       console.log("MSAL initializing with redirectUri:", redirectUri);
       console.log("Current origin:", window.location.origin);
       console.log("Current environment:", config.environment);
+      console.log("Valid redirect URIs:", config.msal.validRedirectUris);
       
       try {
+        // Ensure the current origin is in the validRedirectUris list
+        if (!config.msal.validRedirectUris.includes(redirectUri)) {
+          console.log("Adding current origin to valid redirect URIs:", redirectUri);
+          config.msal.validRedirectUris.push(redirectUri);
+        }
+        
         const instance = new PublicClientApplication({
           auth: {
             clientId: config.msal.clientId,
@@ -38,7 +45,7 @@ export const MsalProvider = ({ children }: MsalProviderProps) => {
             navigateToLoginRequestUrl: true
           },
           cache: {
-            cacheLocation: BrowserCacheLocation.SessionStorage,
+            cacheLocation: BrowserCacheLocation.LocalStorage, // Changed from SessionStorage to LocalStorage for better persistence
             storeAuthStateInCookie: true
           },
           system: {

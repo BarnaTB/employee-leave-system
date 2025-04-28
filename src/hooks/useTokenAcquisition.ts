@@ -22,6 +22,16 @@ export const useTokenAcquisition = () => {
       console.log("Current origin:", window.location.origin);
       console.log("API base URL:", config.api.baseUrl);
       
+      // Check for accounts and set an active account if there is one
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length === 0) {
+        throw new Error("No accounts found");
+      }
+      
+      if (!msalInstance.getActiveAccount() && accounts.length > 0) {
+        msalInstance.setActiveAccount(accounts[0]);
+      }
+      
       const response = await msalInstance.acquireTokenSilent({
         scopes: ["openid", "profile", "email"],
         account: msalInstance.getActiveAccount()!,
@@ -43,19 +53,33 @@ export const useTokenAcquisition = () => {
         
         // Make sure current origin is in the valid redirectUri list
         if (!config.msal.validRedirectUris.includes(redirectUri)) {
-          console.warn("Current origin not in valid redirect URIs list. This may cause issues.");
+          console.warn("Current origin not in valid redirect URIs list. Adding it dynamically.");
+          config.msal.validRedirectUris.push(redirectUri);
         }
         
         // Clear any existing interactions first to prevent "interaction_in_progress" errors
-        if (msalInstance.getActiveAccount() === null) {
-          console.log("No active account, redirecting to login page");
-          // No need to continue with popup if there's no active account
-          throw new Error("No active account");
+        try {
+          msalInstance.clearCache();
+        } catch (e) {
+          // Ignore errors when clearing cache
+        }
+        
+        // Check if we have accounts before trying popup
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length === 0) {
+          console.log("No accounts found, redirecting to login page");
+          throw new Error("No accounts found");
+        }
+        
+        // Set active account if not already set
+        if (!msalInstance.getActiveAccount() && accounts.length > 0) {
+          msalInstance.setActiveAccount(accounts[0]);
         }
         
         const response = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],
-          redirectUri: redirectUri
+          redirectUri: redirectUri,
+          prompt: "select_account" // Force account selection to avoid no_account_error
         });
         
         const jwtToken = await authenticateWithBackend(response);
