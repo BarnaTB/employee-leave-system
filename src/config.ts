@@ -51,12 +51,10 @@ export const config = {
       const env = getEnvironmentType();
       switch (env) {
         case 'local':
-          // If in Docker, we use the service name 'backend' as the hostname
-          return isRunningInDocker() ? 
-            "http://backend:8080/api" : 
-            "http://localhost:8080/api";
+          // For local development, always use localhost:8080
+          return "http://localhost:8080/api";
         case 'preview':
-          // For preview, use a publicly available API endpoint instead of localhost
+          // For preview, use a publicly available API endpoint
           return "https://api.yourdomain.com/api"; // Replace with your actual production API
         default:
           return "https://api.yourdomain.com/api"; // Production fallback
