@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -36,45 +38,75 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.setStatus(HttpServletResponse.SC_OK);
         
         try {
-            if (authentication == null || authentication.getPrincipal() == null) {
-                logger.error("Authentication or principal is null");
+            logger.debug("Authentication object: {}", authentication);
+            
+            if (authentication == null) {
+                logger.error("Authentication is null");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write(objectMapper.writeValueAsString(Map.of(
-                    "error", "Authentication failed",
-                    "message", "No authentication principal found"
+                    "error", "Authentication failed", 
+                    "message", "No authentication data found"
                 )));
                 return;
             }
             
-            if (authentication.getPrincipal() instanceof CustomOAuth2User) {
-                CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-                String token = jwtTokenProvider.generateToken(oAuth2User);
-                Map<String, String> tokenResponse = new HashMap<>();
-                tokenResponse.put("token", token);
-                response.getWriter().write(objectMapper.writeValueAsString(tokenResponse));
-                logger.info("Successfully generated token for user: {}", oAuth2User.getEmail());
-            } else {
-                logger.warn("Principal is not an instance of CustomOAuth2User: {}", 
-                    authentication.getPrincipal().getClass().getName());
+            // Check if we're dealing with OAuth2AuthenticationToken
+            if (authentication instanceof OAuth2AuthenticationToken) {
+                OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+                OAuth2User oauth2User = oauthToken.getPrincipal();
                 
-                // Fallback to standard token generation
-                String email = null;
-                if (authentication.getName() != null) {
-                    email = authentication.getName();
-                }
+                logger.debug("OAuth2User details: {}", oauth2User);
                 
-                if (email == null) {
+                if (oauth2User == null) {
+                    logger.error("OAuth2User principal is null");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.getWriter().write(objectMapper.writeValueAsString(Map.of(
                         "error", "Authentication failed", 
-                        "message", "Could not determine user email"
+                        "message", "OAuth2User principal is null"
                     )));
                     return;
                 }
                 
-                String token = jwtTokenProvider.generateToken(email);
+                // Extract email from attributes for token generation
+                String email = null;
+                Map<String, Object> attributes = oauth2User.getAttributes();
+                
+                if (attributes.containsKey("email")) {
+                    email = (String) attributes.get("email");
+                } else if (attributes.containsKey("preferred_username")) {
+                    email = (String) attributes.get("preferred_username");
+                }
+                
+                if (email == null) {
+                    logger.error("Could not extract email from OAuth2User attributes");
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write(objectMapper.writeValueAsString(Map.of(
+                        "error", "Authentication failed", 
+                        "message", "Could not extract email from user profile"
+                    )));
+                    return;
+                }
+                
+                // Generate token based on available data
+                String token;
+                if (oauth2User instanceof CustomOAuth2User) {
+                    CustomOAuth2User customUser = (CustomOAuth2User) oauth2User;
+                    token = jwtTokenProvider.generateToken(customUser);
+                    logger.info("Generated token for CustomOAuth2User: {}", customUser.getEmail());
+                } else {
+                    token = jwtTokenProvider.generateToken(email);
+                    logger.info("Generated token for email: {}", email);
+                }
+                
+                Map<String, String> tokenResponse = new HashMap<>();
+                tokenResponse.put("token", token);
+                response.getWriter().write(objectMapper.writeValueAsString(tokenResponse));
+            } else {
+                logger.warn("Authentication is not an instance of OAuth2AuthenticationToken: {}", 
+                    authentication.getClass().getName());
+                
+                String token = jwtTokenProvider.generateToken(authentication.getName());
                 response.getWriter().write(objectMapper.writeValueAsString(Map.of("token", token)));
-                logger.info("Generated fallback token for user: {}", email);
             }
         } catch (Exception ex) {
             logger.error("Error in authentication success handler", ex);
