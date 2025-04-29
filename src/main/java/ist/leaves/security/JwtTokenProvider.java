@@ -33,6 +33,10 @@ public class JwtTokenProvider {
         claims.put("email", user.getEmail());
         claims.put("name", user.getName());
         claims.put("role", user.getRole());
+        claims.put("employeeId", user.getId());
+        
+        // Add roles as a list for frontend processing
+        claims.put("roles", new String[] { "USER", user.getRole().name() });
         
         return Jwts.builder()
                 .setClaims(claims)

@@ -29,7 +29,7 @@ public class AuthController {
 
     @GetMapping("/token")
     public ResponseEntity<Map<String, String>> getToken(@AuthenticationPrincipal OAuth2User principal) {
-        logger.info("Token requested by user: {}", principal.getName());
+        logger.info("Token requested by user: {}", principal != null ? principal.getName() : "unknown");
         
         Map<String, String> response = new HashMap<>();
         String token;
