@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import ist.leaves.service.UserService;
 import ist.leaves.security.OAuth2AuthenticationFailureHandler;
+import ist.leaves.security.OAuth2AuthenticationSuccessHandler;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,11 +24,14 @@ public class SecurityConfig {
 
     private final UserService userService;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
+    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(UserService userService,
-                          OAuth2AuthenticationFailureHandler oAuth2FailureHandler) {
+                          OAuth2AuthenticationFailureHandler oAuth2FailureHandler,
+                          OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler) {
         this.userService = userService;
         this.oAuth2FailureHandler = oAuth2FailureHandler;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
@@ -48,13 +52,11 @@ public class SecurityConfig {
                                 .userService(userService)
                         )
                         .failureHandler(oAuth2FailureHandler)
-                        .successHandler((request, response, authentication) -> {
-                            // Return a 200 OK response instead of redirecting
-                            response.setStatus(200);
-                            response.getWriter().write("{\"status\":\"success\",\"message\":\"Authentication successful\"}");
-                            response.setContentType("application/json");
-                        })
+                        .successHandler(oAuth2SuccessHandler)
                 )
+                // Disable form login to prevent HTML login page response
+                .formLogin(formLogin -> formLogin.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/").permitAll()
                 );
