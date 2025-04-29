@@ -21,8 +21,8 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
           'Authorization': `Bearer ${msalResponse.accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Origin': window.location.origin
+          'X-Requested-With': 'XMLHttpRequest'
+          // Removed the Origin header as browsers automatically set this
         },
         withCredentials: true,
       }
