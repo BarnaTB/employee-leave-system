@@ -22,13 +22,21 @@ export const authenticateWithBackend = async (msalResponse: AuthenticationResult
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
-          // Removed the Origin header as browsers automatically set this
         },
         withCredentials: true,
       }
     );
 
-    console.log("Backend authentication successful", response.data);
+    console.log("Backend authentication response:", response);
+    
+    // Validate the token from the backend
+    if (!response.data || !response.data.token) {
+      console.error("Backend did not return a valid token:", response.data);
+      throw new Error("No valid token received from backend");
+    }
+    
+    console.log("Backend authentication successful, token received:", 
+      response.data.token.substring(0, 10) + "...");
     return response.data.token;
   } catch (error: any) {
     console.error("Error authenticating with backend:", error);

@@ -1,16 +1,36 @@
-
 import { AuthState } from '@/types/auth';
 import { AuthenticationResult } from '@azure/msal-browser';
+import { toast } from "@/hooks/use-toast";
 
 export const parseJwtToken = (jwtToken: string): Partial<AuthState> => {
   try {
-    const base64Url = jwtToken.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
+    // Check if the token is a valid structure
+    if (!jwtToken || typeof jwtToken !== 'string' || !jwtToken.includes('.')) {
+      console.error("Invalid token format received:", jwtToken);
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Invalid token format received from server."
+      });
+      throw new Error("Invalid token format received from server");
+    }
     
+    const parts = jwtToken.split('.');
+    if (parts.length !== 3) {
+      console.error("JWT token does not have three parts:", parts.length);
+      throw new Error("Invalid JWT token structure");
+    }
+    
+    const base64Url = parts[1]; // Get the payload part
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // Handle potential padding issues
+    const padding = '='.repeat((4 - base64.length % 4) % 4);
+    const jsonPayload = atob(base64 + padding);
+    
+    // Parse the JSON payload
     const decodedToken = JSON.parse(jsonPayload);
+    console.log("Decoded token payload:", decodedToken);
     
     return {
       employeeId: decodedToken.employeeId || null,
@@ -19,7 +39,12 @@ export const parseJwtToken = (jwtToken: string): Partial<AuthState> => {
     };
   } catch (error) {
     console.error("Error parsing JWT token:", error);
-    throw new Error("Invalid token format received from server");
+    // Return default values instead of throwing
+    return {
+      employeeId: null,
+      isManager: false,
+      isAdmin: false,
+    };
   }
 };
 
