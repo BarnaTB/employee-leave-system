@@ -16,69 +16,51 @@
  */
 export function gravitySimulation(board: string[][]): string[][] {
   // Create a deep copy of the board to avoid modifying the original
-  let result = board.map(row => [...row]);
+  const result = board.map(row => [...row]);
+  const rows = result.length;
+  const cols = result[0].length;
   
-  // Step 1: Apply gravity - initial falling of boxes
-  result = applyGravity(result);
+  // Step 1: Apply gravity (initial falling of boxes)
+  applyGravity(result);
   
-  // Step 2: Identify explosions
-  const explosions = identifyExplosions(result);
+  // Step 2: Identify explosions and affected cells
+  const explosions = findExplosions(result);
   
   // Step 3: Apply explosions if any were found
   if (explosions.length > 0) {
-    result = applyExplosions(result, explosions);
-    // Step 4: Reapply gravity after explosions
-    result = applyGravity(result);
-  }
-  
-  return result;
-}
-
-/**
- * Apply gravity to make all boxes fall down as far as possible
- */
-function applyGravity(board: string[][]): string[][] {
-  const rows = board.length;
-  const cols = board[0].length;
-  const result = board.map(row => [...row]);
-  
-  // Process each column independently
-  for (let col = 0; col < cols; col++) {
-    let nextPosition = rows - 1; // Start from the bottom row
+    // Create a set to track cells affected by explosions
+    const affectedCells = new Set<string>();
     
-    // Scan from bottom to top
-    for (let row = rows - 1; row >= 0; row--) {
-      if (result[row][col] === '#') {
-        // Found a box
-        result[row][col] = '-'; // Remove from current position
-        
-        // Find the next available position to place the box
-        while (nextPosition >= 0 && (result[nextPosition][col] === '#' || result[nextPosition][col] === '*')) {
-          nextPosition--;
+    // Mark all cells affected by explosions
+    for (const [row, col] of explosions) {
+      // Check 3x3 grid centered on the obstacle
+      for (let r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
+        for (let c = Math.max(0, col - 1); c <= Math.min(cols - 1, col + 1); c++) {
+          if (result[r][c] === '#') {
+            // Only mark boxes for removal
+            affectedCells.add(`${r},${c}`);
+          }
         }
-        
-        if (nextPosition >= 0) {
-          // Place the box at the next available position
-          result[nextPosition][col] = '#';
-          nextPosition--; // Update the next position
-        } else {
-          // If no position is available, the box disappears (shouldn't normally happen)
-          continue;
-        }
-      } else if (result[row][col] === '*') {
-        // Reset the next position to be above this obstacle
-        nextPosition = row - 1;
       }
     }
+    
+    // Remove boxes in affected cells
+    for (const cellKey of affectedCells) {
+      const [r, c] = cellKey.split(',').map(Number);
+      result[r][c] = '-';
+    }
+    
+    // Apply gravity again after explosions
+    applyGravity(result);
   }
   
   return result;
 }
 
 /**
- * Identify explosions by finding obstacles with boxes directly above them
+ * Find obstacles with boxes directly above them that will cause explosions
  */
-function identifyExplosions(board: string[][]): [number, number][] {
+function findExplosions(board: string[][]): [number, number][] {
   const rows = board.length;
   const cols = board[0].length;
   const explosions: [number, number][] = [];
@@ -98,35 +80,40 @@ function identifyExplosions(board: string[][]): [number, number][] {
 }
 
 /**
- * Apply explosions to the board
+ * Apply gravity to make all boxes fall down as far as possible.
+ * This function modifies the board in-place.
  */
-function applyExplosions(board: string[][], explosions: [number, number][]): string[][] {
+function applyGravity(board: string[][]): void {
   const rows = board.length;
   const cols = board[0].length;
-  const result = board.map(row => [...row]);
   
-  // Create a set to track cells affected by explosions
-  const affectedCells = new Set<string>();
-  
-  // Mark all cells affected by explosions
-  for (const [row, col] of explosions) {
-    // Check 3x3 grid centered on the obstacle
-    for (let r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
-      for (let c = Math.max(0, col - 1); c <= Math.min(cols - 1, col + 1); c++) {
-        affectedCells.add(`${r},${c}`);
+  // Process each column independently
+  for (let col = 0; col < cols; col++) {
+    // Collect all boxes in this column
+    const boxes = [];
+    
+    for (let row = 0; row < rows; row++) {
+      if (board[row][col] === '#') {
+        boxes.push(row);
+        board[row][col] = '-'; // Remove box temporarily
+      }
+    }
+    
+    // Place boxes from bottom up
+    let currentRow = rows - 1;
+    
+    while (boxes.length > 0 && currentRow >= 0) {
+      // If the current cell is empty, place a box
+      if (board[currentRow][col] === '-') {
+        board[currentRow][col] = '#';
+        boxes.pop(); // Remove one box from our collection
+        currentRow--;
+      } else {
+        // Skip occupied cells (obstacles or already placed boxes)
+        currentRow--;
       }
     }
   }
-  
-  // Remove boxes in affected cells
-  for (const cellKey of affectedCells) {
-    const [r, c] = cellKey.split(',').map(Number);
-    if (result[r][c] === '#') {
-      result[r][c] = '-';
-    }
-  }
-  
-  return result;
 }
 
 /**
@@ -165,6 +152,16 @@ export function testGravitySimulation(): void {
   if (!areEqual(result, expected)) {
     console.log("\nExpected:");
     printBoard(expected);
+    
+    // Debug: Print detailed differences
+    console.log("\nDifferences:");
+    for (let i = 0; i < result.length; i++) {
+      for (let j = 0; j < result[i].length; j++) {
+        if (result[i][j] !== expected[i][j]) {
+          console.log(`Position [${i},${j}]: Got ${result[i][j]}, Expected ${expected[i][j]}`);
+        }
+      }
+    }
   }
 }
 
