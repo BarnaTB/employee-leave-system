@@ -102,15 +102,18 @@ function applyGravity(board: string[][]): void {
     // Place boxes from bottom up
     let currentRow = rows - 1;
     
-    while (boxes.length > 0 && currentRow >= 0) {
+    while (boxes.length > 0) {
       // If the current cell is empty, place a box
-      if (board[currentRow][col] === '-') {
+      if (currentRow >= 0 && board[currentRow][col] === '-') {
         board[currentRow][col] = '#';
         boxes.pop(); // Remove one box from our collection
         currentRow--;
-      } else {
+      } else if (currentRow >= 0) {
         // Skip occupied cells (obstacles or already placed boxes)
         currentRow--;
+      } else {
+        // If we've gone above the top of the board, exit the loop
+        break;
       }
     }
   }
